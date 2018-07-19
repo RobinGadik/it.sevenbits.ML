@@ -193,6 +193,12 @@ if not os.path.isdir('MNIST_GAN_results/Fixed_results'):
 train_hist = {}
 train_hist['D_losses'] = []
 train_hist['G_losses'] = []
+
+
+fixed_p = 'MNIST_GAN_results/Fixed_results/MNIST_GAN_' + str(0) + '.png'
+
+show_result(0, save=True, path=fixed_p, isFix=True)
+
 for epoch in range(train_epoch):
     D_losses = []
     G_losses = []

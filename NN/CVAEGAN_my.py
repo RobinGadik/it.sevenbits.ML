@@ -29,7 +29,7 @@ class generator(nn.Module):
     # forward method
     def forward(self, x , y):
         
-        x = torch.cat( (torch.FloatTensor(x),torch.FloatTensor(y) ) ,dim = 1)
+        x = torch.cat( (x,y) ,dim = 1)
         #print(x.size()[0])
         x = F.leaky_relu(self.fc1(x), 0.5)
         x = F.leaky_relu(self.fc2(x), 0.2)
@@ -66,13 +66,25 @@ class discriminator(nn.Module):
         x = F.softmax(self.fc2(x))
         return x
 
+    
+    
+def labels_to_big_labels(y_):
+    t = torch.zeros(y_.size()[0] , 11 )
+    for i in range(y_.size()[0]):
+        t[i][y_[i]] = 1
+    return t
+
 fixed_z_ = torch.randn((5 * 5, 100))    # fixed noise
 fixed_z_ = Variable(fixed_z_.cpu(), volatile=True)
 fixed_key_ = torch.from_numpy( np.random.randint(low = 0, high = 9, size = 5*5 ) )
+fixed_key_ = labels_to_big_labels(fixed_key_)
 fixed_key_ = Variable(fixed_key_.cpu(), volatile=True)
+                              
 def show_result(num_epoch, show = False, save = False, path = 'result.png', isFix=False):
     z_ = torch.randn((5*5, 100))
     key_ = torch.from_numpy( np.random.randint(low = 0, high = 9, size = 5*5 ) )
+    key_ = labels_to_big_labels(key_)
+    
     z_ , key_ = Variable(z_.cpu(), volatile=True) , Variable(key_.cpu(), volatile=True)
     
     G.eval()
@@ -168,7 +180,14 @@ train_hist['G_losses'] = []
 
 ###
 
+fixed_p = 'MNIST_myCVAE+GAN_results/Fixed_results/MNIST_myCVAE+GAN_' + str(0) + '.png'
+    
+show_result((0), save=True, path=fixed_p, isFix=True)
 
+
+p = 'MNIST_myCVAE+GAN_results/Random_results/MNIST_myCVAE+GAN_' + str(0) + '.png'   
+show_result((0), save=True, path=p, isFix=False)
+    
 
 ###
 
@@ -191,12 +210,6 @@ for epoch in range(train_epoch):
         y_fake_ = torch.LongTensor(mini_batch, 0)
         y_ = torch.LongTensor(y_)
         y_fake_ = torch.from_numpy( np.full(mini_batch , 10) )
-        
-        def labels_to_big_labels(y_):
-            t = torch.zeros(y_.size()[0] , 11 )
-            for i in range(y_.size()[0]):
-                t[i][y_[i]] = 1
-            return t
         
         y_fake_ = labels_to_big_labels(y_fake_)
         y_ = labels_to_big_labels(y_)
@@ -248,10 +261,19 @@ for epoch in range(train_epoch):
         
     print('[%d/%d]: loss_d: %.3f, loss_g: %.3f' % (
         (epoch + 1), train_epoch, torch.mean(torch.FloatTensor(D_losses)), torch.mean(torch.FloatTensor(G_losses))))
-    p = 'MNIST_myCVAE+GAN_results/Random_results/MNIST_myCVAE+GAN_' + str(epoch + 1) + '.png'
-    fixed_p = 'MNIST_myVae+GAN_results/Fixed_results/MNIST_myCVAE+GAN_' + str(epoch + 1) + '.png'
-    show_result((epoch+1), save=True, path=p, isFix=False)
+    #p = 'MNIST_myCVAE+GAN_results/Random_results/MNIST_myCVAE+GAN_' + str(epoch + 1) + '.png'
+   #fixed_p = 'MNIST_myCVАЕ+GAN_results/Fixed_results/MNIST_myCVAE+GAN_' + str(epoch + 1) + '.png'
+    #show_result((epoch+1), save=True, path=p, isFix=False)
+    #show_result((epoch+1), save=True, path=fixed_p, isFix=True)
+    
+    
+    
+    fixed_p = 'MNIST_myCVAE+GAN_results/Fixed_results/MNIST_myCVAE+GAN_' + str(epoch+1) + '.png'  
     show_result((epoch+1), save=True, path=fixed_p, isFix=True)
+
+    p = 'MNIST_myCVAE+GAN_results/Random_results/MNIST_myCVAE+GAN_' + str(epoch+1) + '.png'   
+    show_result((epoch+1), save=True, path=p, isFix=False)
+    
     train_hist['D_losses'].append(torch.mean(torch.FloatTensor(D_losses)))
     train_hist['G_losses'].append(torch.mean(torch.FloatTensor(G_losses)))
 
@@ -262,7 +284,7 @@ torch.save(D.state_dict(), "MNIST_myCVAE+GAN_results/discriminator_param.pkl")
 with open('MNIST_myCVAE+GAN_results/train_hist.pkl', 'wb') as f:
     pickle.dump(train_hist, f)
 
-show_train_hist(train_hist, save=True, path='MNIST_myGAN_results/MNIST_myCVAE+GAN_train_hist.png')
+show_train_hist(train_hist, save=True, path='MNIST_myCVAE+GAN_results/MNIST_myCVAE+GAN_train_hist.png')
 
 images = []
 for e in range(train_epoch):
